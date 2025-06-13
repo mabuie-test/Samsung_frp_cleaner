@@ -1,5 +1,4 @@
 # Samsung_frp_cleaner
-Mestre Jorge Augusto Mabuie, segue abaixo a **descrição detalhada** do programa para inserir no seu repositório Git. Esta descrição destina‑se a fornecer uma visão clara do propósito, funcionalidades e arquitetura da ferramenta, de forma formal, expositiva e descritiva:
 
 > **FRP Cleaner Samsung (Windows + WSL)**
 >
