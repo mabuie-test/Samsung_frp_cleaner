@@ -1,2 +1,3 @@
 pyyaml
 pyqt5
+pyinstaller

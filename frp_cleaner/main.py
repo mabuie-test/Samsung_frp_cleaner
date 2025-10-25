@@ -1,5 +1,8 @@
 import argparse
 import logging
+import sys
+from pathlib import Path
+
 from cleaner.img_manager import (
     convert_sparse_to_raw,
     mount_image,
@@ -9,9 +12,21 @@ from cleaner.img_manager import (
 from cleaner.frp_detector import detect_targets
 from cleaner.frp_neutralizer import neutralize
 
+
+def _resolve_base_dir() -> Path:
+    """Return the directory where auxiliary files should be stored."""
+    if getattr(sys, "frozen", False):  # PyInstaller executável
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
+
+BASE_DIR = _resolve_base_dir()
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 # Configuração do log
 logging.basicConfig(
-    filename="logs/frp_cleaner.log",
+    filename=str(LOG_DIR / "frp_cleaner.log"),
     level=logging.INFO,
     format="%(asctime)s %(levelname)s: %(message)s"
 )

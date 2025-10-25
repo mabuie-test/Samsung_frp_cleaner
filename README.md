@@ -21,8 +21,45 @@
 > * Windows 10/11 com WSL 2 (Ubuntu/Debian).
 > * Python 3.10+, `simg2img`, `fuse`, `android-tools-fsutils`, `avbtool`, `magiskboot`.
 > * Permissões de administrador/`sudo` para montagem de imagens ext4.
+
+## Empacotamento rápido em executável Windows
+
+Para distribuir ou utilizar a ferramenta sem abrir o terminal sempre que precisar, é possível gerar um executável `.exe` único através do PyInstaller:
+
+1. Instale as dependências Python (incluindo o PyInstaller) numa `venv` ou ambiente global:
+
+   ```bash
+   python -m venv .venv
+   .\.venv\Scripts\activate
+   pip install -r requesitos.txt
+   ```
+
+2. Execute o script auxiliar incluído no projecto:
+
+   ```bash
+   python build_windows_exe.py
+   ```
+
+3. O executável `FRP-Cleaner.exe` será criado na pasta `dist/`. Coloque-o junto dos recursos exigidos (imagens `system.img`, pasta `AP`, pasta `Keys`) e execute-o normalmente no Windows. A primeira execução demora um pouco porque o PyInstaller descomprime os ficheiros temporários.
+
+> **Observação:** mesmo no modo executável, os utilitários externos (`simg2img`, `avbtool`, `magiskboot`, WSL com `mount`, etc.) continuam a ser necessários e devem estar configurados no sistema conforme descrito anteriormente.
 >
 > **Licença e responsabilidade:**
 > Este software destina‑se exclusivamente a fins legítimos, em dispositivos de propriedade do utilizador ou sob autorização expressa. A utilização indevida poderá violar legislações de cibersegurança e políticas de fabricantes. Na minha opinião, a documentação rigorosa e os logs proporcionam um nível de responsabilidade e controlo imprescindível em ambientes técnicos e forenses.
 >
 > — Mestre Jorge Augusto Mabuie, junho de 2025
+
+
+## Gerar instalador gráfico para Windows
+
+Para distribuir o FRP Cleaner como um instalador tradicional (.exe) utilize os artefactos na pasta `instalador/`:
+
+1. No Windows, com a `venv` activada, instale as dependências (`pip install -r requesitos.txt`).
+2. Instale o [Inno Setup](https://jrsoftware.org/isinfo.php) e certifique-se de que o comando `iscc.exe` está no `PATH`.
+3. Execute o script PowerShell (ele detecta automaticamente a versão definida em `cleaner.__version__` para sincronizar o executável e o instalador):
+   ```powershell
+   ./instalador/build_installer.ps1
+   ```
+4. O pacote `instalador/dist/FRP_Cleaner_Setup.exe` será gerado, copiando automaticamente o executável PyInstaller e a documentação rápida.
+
+Caso prefira executar etapas manualmente, consulte `instalador/README.md`. O instalador final continuará a exigir o WSL e as ferramentas externas detalhadas anteriormente.
