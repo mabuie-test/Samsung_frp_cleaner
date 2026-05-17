@@ -1,11 +1,40 @@
 import os
 import subprocess
 import logging
+import platform
 
 def to_cmd(cmd):
     """Prefixa com 'wsl' em Windows+WSL."""
     import platform, shutil as sh
     return (["wsl"] + cmd) if platform.system()=="Windows" and sh.which("wsl") else cmd
+
+def check_runtime_dependencies():
+    """Valida dependências para patch de AVB/boot."""
+    import shutil as sh
+
+    missing = []
+    instructions = []
+
+    if platform.system() == "Windows" and not sh.which("wsl"):
+        missing.append("wsl")
+        instructions.append("Instale/ative o WSL: execute `wsl --install` no PowerShell como Administrador.")
+
+    for cmd in ["avbtool", "magiskboot"]:
+        if not sh.which(cmd):
+            missing.append(cmd)
+
+    if missing:
+        instructions.append(
+            "Instale as ferramentas faltantes e garanta que estejam no PATH "
+            "(ex.: `avbtool` do Android SDK e binário `magiskboot`)."
+        )
+
+    ok = not missing and not instructions
+    return {
+        "ok": ok,
+        "missing": sorted(set(missing)),
+        "instructions": instructions
+    }
 
 def patch_vbmeta(vbmeta_path, private_key_path):
     """Desativa AVB_HASHTREE e AVB_VERIFICATION em vbmeta.img."""

@@ -6,8 +6,10 @@ from PyQt5.QtWidgets import (
 )
 from cleaner.img_manager import (
     convert_sparse_to_raw, mount_image,
-    unmount_image, prepare_and_patch_all
+    unmount_image, prepare_and_patch_all,
+    check_runtime_dependencies as check_img_runtime_dependencies
 )
+from cleaner.avb_patcher import check_runtime_dependencies as check_avb_runtime_dependencies
 from cleaner.frp_detector import detect_targets
 from cleaner.frp_neutralizer import neutralize
 
@@ -78,6 +80,7 @@ class FRPToolGUI(QWidget):
 
     def run_clean(self):
         try:
+            self.validate_environment_or_raise()
             # Reutiliza lógica do CLI
             raw = self.img_path
             if "sparse" in raw:
@@ -91,6 +94,23 @@ class FRPToolGUI(QWidget):
             QMessageBox.information(self, "Sucesso", f"Pacote final: {pkg}")
         except Exception as e:
             QMessageBox.critical(self, "Erro", str(e))
+
+    def validate_environment_or_raise(self):
+        img_diag = check_img_runtime_dependencies()
+        avb_diag = check_avb_runtime_dependencies()
+
+        missing = sorted(set(img_diag["missing"] + avb_diag["missing"]))
+        instructions = img_diag["instructions"] + avb_diag["instructions"]
+
+        if missing or instructions:
+            msg = ["Ambiente inválido para execução do FRP Cleaner."]
+            if missing:
+                msg.append("Dependências ausentes: " + ", ".join(missing))
+            if instructions:
+                msg.append("Correções sugeridas:")
+                for item in instructions:
+                    msg.append(f"- {item}")
+            raise RuntimeError("\n".join(msg))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
