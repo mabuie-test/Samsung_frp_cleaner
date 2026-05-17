@@ -54,8 +54,26 @@ def patch_vbmeta(vbmeta_path, private_key_path):
 def patch_bootimg(bootimg_path, magiskboot_path):
     """Aplica patch Magisk para contornar dm-verity no boot.img."""
     out = bootimg_path.replace(".img", "_patched.img")
-    # Desempacota e reempacota
-    subprocess.run(to_cmd([magiskboot_path, "--unpack", bootimg_path]), check=True)
-    subprocess.run(to_cmd([magiskboot_path, "--repack", bootimg_path]), check=True)
+    boot_dir = os.path.dirname(os.path.abspath(bootimg_path)) or "."
+    boot_name = os.path.basename(bootimg_path)
+    repacked_name = f"new-{boot_name}"
+    repacked_path = os.path.join(boot_dir, repacked_name)
+
+    # Desempacota e reempacota no diretório do boot para saída determinística.
+    subprocess.run(to_cmd([magiskboot_path, "--unpack", boot_name]), check=True, cwd=boot_dir)
+    subprocess.run(to_cmd([magiskboot_path, "--repack", boot_name]), check=True, cwd=boot_dir)
+
+    if not os.path.exists(repacked_path):
+        raise FileNotFoundError(
+            f"Falha ao reempacotar {bootimg_path}: artefato esperado não foi criado ({repacked_path})."
+        )
+
+    os.replace(repacked_path, out)
+
+    if not os.path.exists(out):
+        raise FileNotFoundError(
+            f"Falha ao preparar boot patch: arquivo de saída não existe após repack ({out})."
+        )
+
     logging.info(f"boot.img patch: {bootimg_path} → {out}")
     return out
