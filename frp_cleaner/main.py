@@ -41,13 +41,21 @@ def process_image(img_path, strategy, ap_folder, keys_folder):
 
     # 2. Montar, detectar e neutralizar FRP
     mount_dir = mount_image(raw)
-    targets = detect_targets(mount_dir)
-    if targets:
-        logging.info(f"Alvos FRP detectados: {targets}")
-        neutralize(targets, strategy)
-    else:
-        logging.info("Nenhum alvo FRP encontrado.")
-    unmount_image()
+    try:
+        targets = detect_targets(mount_dir)
+        if targets:
+            logging.info(f"Alvos FRP detectados: {targets}")
+            neutralize(targets, strategy)
+        else:
+            logging.info("Nenhum alvo FRP encontrado.")
+    except Exception as error:
+        logging.error("Falha no processamento da imagem: %s", error)
+        raise RuntimeError(
+            "Processamento abortado para preservar a integridade da imagem: "
+            f"{error}"
+        ) from error
+    finally:
+        unmount_image()
 
     # 3. Patch AVB & boot, reempacotar em .tar.md5
     final_pkg = prepare_and_patch_all(ap_folder, keys_folder)
