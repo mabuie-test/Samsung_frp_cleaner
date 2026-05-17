@@ -7,8 +7,10 @@ from cleaner.img_manager import (
     convert_sparse_to_raw,
     mount_image,
     unmount_image,
-    prepare_and_patch_all
+    prepare_and_patch_all,
+    check_runtime_dependencies as check_img_runtime_dependencies
 )
+from cleaner.avb_patcher import check_runtime_dependencies as check_avb_runtime_dependencies
 from cleaner.frp_detector import detect_targets
 from cleaner.frp_neutralizer import neutralize
 
@@ -52,6 +54,23 @@ def process_image(img_path, strategy, ap_folder, keys_folder):
     print(f"[OK] Pacote final pronto: {final_pkg}")
     logging.info(f"Processo concluído. Pacote: {final_pkg}")
 
+def validate_environment_or_raise():
+    img_diag = check_img_runtime_dependencies()
+    avb_diag = check_avb_runtime_dependencies()
+
+    missing = sorted(set(img_diag["missing"] + avb_diag["missing"]))
+    instructions = img_diag["instructions"] + avb_diag["instructions"]
+
+    if missing or instructions:
+        msg = ["Ambiente inválido para execução do FRP Cleaner."]
+        if missing:
+            msg.append("Dependências ausentes: " + ", ".join(missing))
+        if instructions:
+            msg.append("Correções sugeridas:")
+            for item in instructions:
+                msg.append(f"- {item}")
+        raise RuntimeError("\n".join(msg))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="FRP Cleaner Samsung (Windows+WSL)"
@@ -64,4 +83,5 @@ if __name__ == "__main__":
         help="Estratégia de neutralização FRP (default: rename)"
     )
     args = parser.parse_args()
+    validate_environment_or_raise()
     process_image(args.img, args.strategy, args.ap_folder, args.keys_folder)
